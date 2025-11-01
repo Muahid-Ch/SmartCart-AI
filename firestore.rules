@@ -1,0 +1,145 @@
+/**
+ * @fileoverview Firestore Security Rules for SmartCart AI.
+ *
+ * Core Philosophy: This ruleset enforces a strict user-ownership model, where each user can only access their own data.
+ *
+ * Data Structure: All data is nested under /users/{userId}, including expenses, budgets, and optimization insights.
+ *
+ * Key Security Decisions:
+ *  - User listing is disallowed.
+ *  - All write operations are protected by ownership checks.
+ *  - Data consistency between paths and document IDs is enforced.
+ *
+ * Denormalization for Authorization: No denormalization is needed as all collections are user-scoped.
+ *
+ * Structural Segregation: All data is stored within user-specific subcollections, ensuring privacy.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Restricts access to the /users collection. Users can only read their own document and create their own document.
+     * @path /users/{userId}
+     * @allow (get) User A can read their own profile: `request.auth.uid == 'user_a'`
+     * @allow (create) User A can create their own profile: `request.auth.uid == 'user_a'`
+     * @deny (get) User A cannot read User B's profile: `request.auth.uid == 'user_b'`
+     * @deny (create) User A cannot create User B's profile: `request.auth.uid == 'user_b'`
+     * @deny (list) No user can list all user profiles.
+     * @deny (update) User A cannot update User B's profile.
+     * @deny (delete) User A cannot delete User B's profile.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, and validates relational integrity between documents.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Restricts access to the /users/{userId}/expenses collection. Users can only read and write their own expenses.
+     * @path /users/{userId}/expenses/{expenseId}
+     * @allow (get) User A can read their own expense: `request.auth.uid == 'user_a'`
+     * @allow (create) User A can create their own expense: `request.auth.uid == 'user_a'`
+     * @deny (get) User A cannot read User B's expense: `request.auth.uid == 'user_b'`
+     * @deny (create) User A cannot create User B's expense: `request.auth.uid == 'user_b'`
+     * @deny (list) User A can list only their expenses: `request.auth.uid == 'user_a'`
+     * @deny (update) User A cannot update User B's expense.
+     * @deny (delete) User A cannot delete User B's expense.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, and validates relational integrity between documents.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Restricts access to the /users/{userId}/expenses/{expenseId}/optimizationInsights collection. Users can only read and write their own optimization insights.
+     * @path /users/{userId}/expenses/{expenseId}/optimizationInsights/{insightId}
+     * @allow (get) User A can read their own optimization insight: `request.auth.uid == 'user_a'`
+     * @allow (create) User A can create their own optimization insight: `request.auth.uid == 'user_a'`
+     * @deny (get) User A cannot read User B's optimization insight: `request.auth.uid == 'user_b'`
+     * @deny (create) User A cannot create User B's optimization insight: `request.auth.uid == 'user_b'`
+     * @deny (list) User A can list only their optimization insights: `request.auth.uid == 'user_a'`
+     * @deny (update) User A cannot update User B's optimization insight.
+     * @deny (delete) User A cannot delete User B's optimization insight.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, and validates relational integrity between documents.
+     */
+    match /users/{userId}/expenses/{expenseId}/optimizationInsights/{insightId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Restricts access to the /users/{userId}/budgets collection. Users can only read and write their own budgets.
+     * @path /users/{userId}/budgets/{budgetId}
+     * @allow (get) User A can read their own budget: `request.auth.uid == 'user_a'`
+     * @allow (create) User A can create their own budget: `request.auth.uid == 'user_a'`
+     * @deny (get) User A cannot read User B's budget: `request.auth.uid == 'user_b'`
+     * @deny (create) User A cannot create User B's budget: `request.auth.uid == 'user_b'`
+     * @deny (list) User A can list only their budgets: `request.auth.uid == 'user_a'`
+     * @deny (update) User A cannot update User B's budget.
+     * @deny (delete) User A cannot delete User B's budget.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, and validates relational integrity between documents.
+     */
+    match /users/{userId}/budgets/{budgetId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}

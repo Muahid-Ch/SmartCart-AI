@@ -1,0 +1,239 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the SmartCart AI application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the user account was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single expense record.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Expense)"
+        },
+        "itemName": {
+          "type": "string",
+          "description": "Name of the item purchased."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the expense (e.g., Dairy, Grains)."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the item."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the expense occurred.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "itemName",
+        "category",
+        "price",
+        "timestamp"
+      ]
+    },
+    "Budget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Budget",
+      "type": "object",
+      "description": "Represents a user's budget for a specific month.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the budget entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Budget)"
+        },
+        "month": {
+          "type": "string",
+          "description": "The month the budget is for (e.g., '2024-01')."
+        },
+        "budgetAmount": {
+          "type": "number",
+          "description": "The total budget amount for the month."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "month",
+        "budgetAmount"
+      ]
+    },
+    "OptimizationInsight": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OptimizationInsight",
+      "type": "object",
+      "description": "Represents an AI-generated optimization insight.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the insight."
+        },
+        "expenseId": {
+          "type": "string",
+          "description": "Reference to Expense. (Relationship: Expense 1:N OptimizationInsight)"
+        },
+        "alternativeProduct": {
+          "type": "string",
+          "description": "Suggested alternative product."
+        },
+        "potentialSavings": {
+          "type": "number",
+          "description": "Estimated potential savings from the suggested alternative."
+        },
+        "insightDate": {
+          "type": "string",
+          "description": "Date when the insight was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "expenseId",
+        "alternativeProduct",
+        "potentialSavings",
+        "insightDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense records for each user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique identifier for the expense."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}/optimizationInsights/{insightId}",
+        "definition": {
+          "entityName": "OptimizationInsight",
+          "schema": {
+            "$ref": "#/backend/entities/OptimizationInsight"
+          },
+          "description": "Stores optimization insights for each expense.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique identifier for the expense."
+            },
+            {
+              "name": "insightId",
+              "description": "The unique identifier for the optimization insight."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/budgets/{budgetId}",
+        "definition": {
+          "entityName": "Budget",
+          "schema": {
+            "$ref": "#/backend/entities/Budget"
+          },
+          "description": "Stores budget information for each user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "budgetId",
+              "description": "The unique identifier for the budget."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User data and related expenses, budgets, and optimization insights are structured in a hierarchical manner under the `/users/{userId}` path, which provides a strong foundation for ownership-based security rules. \n\nAuthorization Independence is achieved by storing all authorization data needed within each document, eliminating the need for `get()` calls in security rules. Since expenses, budgets, and optimization insights are all user-owned, there is no need to denormalize any members map. Each user's data is segregated, enabling efficient QAPs by only listing documents relevant to the authenticated user.\n\nExpenses are modeled as subcollections under each user (`/users/{userId}/expenses/{expenseId}`). This structure is highly secure and makes ownership-based security rules simple and efficient. Optimization Insights are further nested under expenses (`/users/{userId}/expenses/{expenseId}/optimizationInsights/{insightId}`), maintaining the hierarchical ownership. Budgets are also maintained under each user. This structure ensures that all data access is controlled by the user ID, providing a clear and secure data access pattern."
+  }
+}
